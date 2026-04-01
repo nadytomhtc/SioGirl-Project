@@ -1,255 +1,77 @@
+<!DOCTYPE html>
 <html>
-
 <head>
-<meta http-equiv=Content-Type content="text/html; charset=big5">
-<meta name=Generator content="Microsoft Word 15 (filtered)">
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:·s²Ó©úÅé;
-	panose-1:2 2 5 0 0 0 0 0 0 0;}
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-@font-face
-	{font-family:"\@·s²Ó©úÅé";
-	panose-1:2 1 6 1 0 1 1 1 1 1;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0cm;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Calibri",sans-serif;}
-.MsoChpDefault
-	{font-family:"Calibri",sans-serif;}
- /* Page Definitions */
- @page WordSection1
-	{size:595.3pt 841.9pt;
-	margin:72.0pt 90.0pt 72.0pt 90.0pt;
-	layout-grid:18.0pt;}
-div.WordSection1
-	{page:WordSection1;}
--->
-</style>
-
+    <meta charset="UTF-8">
+    <title>SioGirl VRM äº’å‹•ä¸­å¿ƒ</title>
+    <script src="https://unpkg.com/three@0.145.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://unpkg.com/@pixiv/three-vrm@1.0.0/lib/three-vrm.js"></script>
+    <style>
+        body { margin: 0; background: #0f172a; color: white; display: flex; height: 100vh; overflow: hidden; font-family: sans-serif; }
+        #canvas-container { width: 50%; height: 100%; border-right: 2px solid #1e293b; }
+        #ui-panel { width: 50%; padding: 20px; display: flex; flex-direction: column; }
+        #chat-box { flex: 1; background: #1e293b; border-radius: 12px; padding: 15px; overflow-y: auto; margin-bottom: 10px; }
+        #status { color: #60a5fa; font-size: 14px; margin-bottom: 10px; }
+    </style>
 </head>
-
-<body lang=ZH-TW style='text-justify-trim:punctuation'>
-
-<div class=WordSection1 style='layout-grid:18.0pt'>
-
-<p class=MsoNormal><span lang=EN-US>&lt;script
-src=&quot;https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js&quot;&gt;&lt;/script&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&lt;script
-src=&quot;https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js&quot;&gt;&lt;/script&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&lt;script
-src=&quot;https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@1.0.0/lib/three-vrm.js&quot;&gt;&lt;/script&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&lt;style&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; body { margin: 0;
-background: #0f172a; overflow: hidden; display: flex; height: 100vh; }</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; #vrm-container { width:
-50%; height: 100%; }</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; #ui-panel { width: 50%;
-padding: 20px; background: #1e293b; color: white; }</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&lt;/style&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&lt;div
-id=&quot;vrm-container&quot;&gt;&lt;/div&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&lt;div id=&quot;ui-panel&quot;&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; &lt;h3&gt;SioGirl VRM </span><span
-style='font-family:"·s²Ó©úÅé",serif'>´ú¸Õ°Ï</span><span lang=EN-US>&lt;/h3&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; &lt;p&gt;</span><span
-style='font-family:"·s²Ó©úÅé",serif'>ª¬ºA¡G</span><span lang=EN-US>&lt;span
-id=&quot;status&quot;&gt;</span><span style='font-family:"·s²Ó©úÅé",serif'>¸ü¤J¤¤</span><span
-lang=EN-US>...&lt;/span&gt;&lt;/p&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; &lt;div
-id=&quot;chat-log&quot; style=&quot;height: 300px; overflow-y: auto;
-background: #0f172a; padding: 10px; margin-bottom: 10px;&quot;&gt;&lt;/div&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; &lt;input
-id=&quot;user-input&quot; type=&quot;text&quot; placeholder=&quot;</span><span
-style='font-family:"·s²Ó©úÅé",serif'>¿é¤J°T®§</span><span lang=EN-US>...&quot;
-style=&quot;width: 70%; padding: 10px;&quot;&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; &lt;button
-onclick=&quot;sayHello()&quot;&gt;</span><span style='font-family:"·s²Ó©úÅé",serif'>µo°e</span><span
-lang=EN-US>&lt;/button&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&lt;/div&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&lt;script&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; // 1. </span><span
-style='font-family:"·s²Ó©úÅé",serif'>ªì©l¤Æ</span><span lang=EN-US> 3D </span><span
-style='font-family:"·s²Ó©úÅé",serif'>µøµ¡</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; const container =
-document.getElementById('vrm-container');</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; const scene = new
-THREE.Scene();</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; const camera = new
-THREE.PerspectiveCamera(35, container.clientWidth / container.clientHeight,
-0.1, 20);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; camera.position.set(0,
-1.4, 1.2); // </span><span style='font-family:"·s²Ó©úÅé",serif'>³o¬O»EµJ¦b¨¤¦âÁy³¡ªº°ª«×</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; const renderer = new
-THREE.WebGLRenderer({ antialias: true, alpha: true });</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;
-renderer.setSize(container.clientWidth, container.clientHeight);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;
-container.appendChild(renderer.domElement);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; const light = new
-THREE.DirectionalLight(0xffffff);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; light.position.set(1, 1,
-1).normalize();</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; scene.add(light);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; scene.add(new
-THREE.AmbientLight(0xffffff, 0.4));</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; // 2. </span><span
-style='font-family:"·s²Ó©úÅé",serif'>¸ü¤J§Aªº</span><span lang=EN-US> VRM </span><span
-style='font-family:"·s²Ó©úÅé",serif'>ÀÉ®×</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; const loader = new
-THREE.GLTFLoader();</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; // *** </span><span
-style='font-family:"·s²Ó©úÅé",serif'>½Ğ¦b³o¸Ì¶K¤W§Aªº</span><span lang=EN-US> VRM </span><span
-style='font-family:"·s²Ó©úÅé",serif'>ºô§}</span><span lang=EN-US> ***</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; const vrmUrl =
-'https://raw.githubusercontent.com/pixiv/three-vrm/master/packages/three-vrm/examples/models/vrm/three-vrm-girl.vrm';
-</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; loader.load(vrmUrl,
-(gltf) =&gt; {</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-THREE.VRM.from(gltf).then((vrm) =&gt; {</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-scene.add(vrm.scene);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-vrm.scene.rotation.y = Math.PI; // </span><span style='font-family:"·s²Ó©úÅé",serif'>Âà¦V¥¿­±</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-document.getElementById('status').innerText = &quot;</span><span
-style='font-family:"·s²Ó©úÅé",serif'>¤w´Nºü</span><span lang=EN-US>&quot;;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;});</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; });</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; function animate() {</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-requestAnimationFrame(animate);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-renderer.render(scene, camera);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; }</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; animate();</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; // 3. </span><span
-style='font-family:"·s²Ó©úÅé",serif'>¤¬°Ê¥\¯à</span><span lang=EN-US> (TTS </span><span
-style='font-family:"·s²Ó©úÅé",serif'>»P</span> <span style='font-family:"·s²Ó©úÅé",serif'>Â²©ö¦^ÂĞ</span><span
-lang=EN-US>)</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; function sayHello() {</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-const input = document.getElementById('user-input');</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-const text = input.value;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-if(!text) return;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-document.getElementById('chat-log').innerHTML += `&lt;p&gt;</span><span
-style='font-family:"·s²Ó©úÅé",serif'>§A</span><span lang=EN-US>: ${text}&lt;/p&gt;`;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-const resp = &quot;</span><span style='font-family:"·s²Ó©úÅé",serif'>§A¦n¡I§Ú¬O</span><span
-lang=EN-US> SioGirl</span><span style='font-family:"·s²Ó©úÅé",serif'>¡A¬İ¨ì§Úªº</span><span
-lang=EN-US> 3D </span><span style='font-family:"·s²Ó©úÅé",serif'>¼Ë¤l¤F¶Ü¡H</span><span
-lang=EN-US>&quot;;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-document.getElementById('chat-log').innerHTML += `&lt;p
-style=&quot;color:#60a5fa&quot;&gt;SioGirl: ${resp}&lt;/p&gt;`;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-const utter = new SpeechSynthesisUtterance(resp);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-utter.lang = 'zh-TW';</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-window.speechSynthesis.speak(utter);</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-input.value = &quot;&quot;;</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&nbsp;&nbsp;&nbsp; }</span></p>
-
-<p class=MsoNormal><span lang=EN-US>&lt;/script&gt;</span></p>
-
-</div>
-
+<body>
+    <div id="canvas-container"></div>
+    <div id="ui-panel">
+        <div id="status">ç³»çµ±ï¼šæ­£åœ¨è®€å– SioGirl_Larry.vrm...</div>
+        <div id="chat-box"></div>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="user-input" placeholder="å°å¥¹èªªè©±..." style="flex:1; padding:10px; border-radius:8px; border:none; background:#334155; color:white;">
+            <button onclick="chat()" style="padding:10px 20px; background:#3b82f6; border:none; color:white; border-radius:8px; cursor:pointer;">ç™¼é€</button>
+        </div>
+    </div>
+
+<script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(35, (window.innerWidth/2) / window.innerHeight, 0.1, 20);
+    camera.position.set(0, 1.4, 1.3);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth/2, window.innerHeight);
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    const light = new THREE.DirectionalLight(0xffffff);
+    light.position.set(1, 1, 1).normalize();
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+    const loader = new THREE.GLTFLoader();
+    // é—œéµï¼šè®€å–ä½ å‰›å‰›ä¸Šå‚³çš„åŒè³‡æ–™å¤¾ VRM
+    loader.load('./SioGirl_Larry.vrm', (gltf) => {
+        THREE.VRM.from(gltf).then((vrm) => {
+            scene.add(vrm.scene);
+            vrm.scene.rotation.y = Math.PI;
+            document.getElementById('status').innerText = "ç‹€æ…‹ï¼šSioGirl å·²é€£ç·š";
+        });
+    }, undefined, (error) => {
+        document.getElementById('status').innerText = "è®€å–å¤±æ•—ï¼Œè«‹æª¢æŸ¥æª”åæ˜¯å¦æ­£ç¢º";
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    function chat() {
+        const input = document.getElementById('user-input');
+        const text = input.value;
+        if(!text) return;
+        document.getElementById('chat-box').innerHTML += `<p style="color:#94a3b8">ä½ : ${text}</p>`;
+        input.value = "";
+        
+        setTimeout(() => {
+            const resp = "å“ˆå›‰ï¼æˆ‘æ˜¯ SioGirl_Larryã€‚æº–å‚™å¥½è·Ÿæˆ‘ä¸€èµ·åœ¨ VIVERSE å‰µé€ é‡‘æµäº†å—ï¼Ÿ";
+            document.getElementById('chat-box').innerHTML += `<p style="color:#3b82f6">SioGirl: ${resp}</p>`;
+            const utter = new SpeechSynthesisUtterance(resp);
+            utter.lang = 'zh-TW';
+            window.speechSynthesis.speak(utter);
+        }, 800);
+    }
+</script>
 </body>
-
 </html>
