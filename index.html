@@ -2,26 +2,39 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>SioGirl VRM 互動中心</title>
+    <title>SioGirl VRM 互動中心 - 進度版</title>
     <script src="https://unpkg.com/three@0.145.0/build/three.min.js"></script>
     <script src="https://unpkg.com/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://unpkg.com/@pixiv/three-vrm@1.0.0/lib/three-vrm.js"></script>
     <style>
         body { margin: 0; background: #0f172a; color: white; display: flex; height: 100vh; overflow: hidden; font-family: sans-serif; }
-        #canvas-container { width: 50%; height: 100%; border-right: 2px solid #1e293b; }
+        #canvas-container { width: 50%; height: 100%; border-right: 2px solid #1e293b; position: relative; }
         #ui-panel { width: 50%; padding: 20px; display: flex; flex-direction: column; }
-        #chat-box { flex: 1; background: #1e293b; border-radius: 12px; padding: 15px; overflow-y: auto; margin-bottom: 10px; }
-        #status { color: #60a5fa; font-size: 14px; margin-bottom: 10px; }
+        #chat-box { flex: 1; background: #1e293b; border-radius: 12px; padding: 15px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #334155; }
+        
+        /* 進度條樣式 */
+        #loader-wrapper { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 80%; }
+        #progress-bar-container { width: 100%; height: 10px; background: #334155; border-radius: 5px; margin-top: 10px; overflow: hidden; }
+        #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; }
+        #percent-text { font-size: 24px; font-weight: bold; color: #60a5fa; margin-bottom: 5px; }
     </style>
 </head>
 <body>
-    <div id="canvas-container"></div>
+    <div id="canvas-container">
+        <div id="loader-wrapper">
+            <div id="percent-text">正在召喚 SioGirl... 0%</div>
+            <div id="progress-bar-container">
+                <div id="progress-bar"></div>
+            </div>
+            <p style="font-size: 12px; color: #94a3b8; margin-top: 10px;">首次載入較慢，請稍候</p>
+        </div>
+    </div>
+
     <div id="ui-panel">
-        <div id="status">系統：正在讀取 SioGirl_Larry.vrm...</div>
         <div id="chat-box"></div>
         <div style="display:flex; gap:10px;">
-            <input type="text" id="user-input" placeholder="對她說話..." style="flex:1; padding:10px; border-radius:8px; border:none; background:#334155; color:white;">
-            <button onclick="chat()" style="padding:10px 20px; background:#3b82f6; border:none; color:white; border-radius:8px; cursor:pointer;">發送</button>
+            <input type="text" id="user-input" placeholder="對她說話..." style="flex:1; padding:12px; border-radius:8px; border:none; background:#334155; color:white;">
+            <button onclick="chat()" style="padding:10px 20px; background:#3b82f6; border:none; color:white; border-radius:8px; cursor:pointer; font-weight:bold;">發送</button>
         </div>
     </div>
 
@@ -37,19 +50,32 @@
     const light = new THREE.DirectionalLight(0xffffff);
     light.position.set(1, 1, 1).normalize();
     scene.add(light);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
     const loader = new THREE.GLTFLoader();
-    // 關鍵：讀取你剛剛上傳的同資料夾 VRM
-    loader.load('./SioGirl_Larry.vrm', (gltf) => {
-        THREE.VRM.from(gltf).then((vrm) => {
-            scene.add(vrm.scene);
-            vrm.scene.rotation.y = Math.PI;
-            document.getElementById('status').innerText = "狀態：SioGirl 已連線";
-        });
-    }, undefined, (error) => {
-        document.getElementById('status').innerText = "讀取失敗，請檢查檔名是否正確";
-    });
+    
+    // 載入 VRM 並監控進度
+    loader.load('./SioGirl_Larry.vrm', 
+        (gltf) => {
+            THREE.VRM.from(gltf).then((vrm) => {
+                scene.add(vrm.scene);
+                vrm.scene.rotation.y = Math.PI;
+                // 隱藏載入器
+                document.getElementById('loader-wrapper').style.display = 'none';
+                document.getElementById('chat-box').innerHTML += `<p style="color:#60a5fa">[系統] SioGirl_Larry 已就緒。</p>`;
+            });
+        }, 
+        (progress) => {
+            // 計算百分比
+            const percent = Math.round((progress.loaded / progress.total) * 100);
+            document.getElementById('progress-bar').style.width = percent + '%';
+            document.getElementById('percent-text').innerText = `正在召喚 SioGirl... ${percent}%`;
+        }, 
+        (error) => {
+            console.error(error);
+            document.getElementById('percent-text').innerText = "讀取失敗，請確認檔案路徑";
+        }
+    );
 
     function animate() {
         requestAnimationFrame(animate);
@@ -65,7 +91,7 @@
         input.value = "";
         
         setTimeout(() => {
-            const resp = "哈囉！我是 SioGirl_Larry。準備好跟我一起在 VIVERSE 創造金流了嗎？";
+            const resp = "哈囉！進度條跑完我就出現了！這就是 AI 導流的第一步。";
             document.getElementById('chat-box').innerHTML += `<p style="color:#3b82f6">SioGirl: ${resp}</p>`;
             const utter = new SpeechSynthesisUtterance(resp);
             utter.lang = 'zh-TW';
