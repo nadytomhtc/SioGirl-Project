@@ -2,81 +2,96 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>SioGirl 終極相容版</title>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.0.0/lib/three-vrm.js"></script>
+    <title>SioGirl 系統診斷面板</title>
+    <script src="https://unpkg.com/three@0.146.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.146.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://unpkg.com/@pixiv/three-vrm@1.0.9/lib/three-vrm.js"></script>
     <style>
-        body { margin: 0; background: #0b0f1a; color: white; display: flex; height: 100vh; font-family: sans-serif; overflow: hidden; }
-        #viewer { width: 60%; height: 100%; position: relative; background: #000; }
-        #panel { width: 40%; padding: 20px; background: #1a202c; display: flex; flex-direction: column; border-left: 2px solid #2d3748; }
-        #status { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 12px; color: #63b3ed; }
-        #chat-log { flex: 1; overflow-y: auto; padding: 10px; font-size: 14px; }
-        .input-group { display: flex; gap: 10px; margin-top: 10px; }
-        input { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #4a5568; background: #2d3748; color: white; }
-        button { padding: 10px 20px; background: #3182ce; border: none; color: white; border-radius: 5px; cursor: pointer; }
+        body { margin: 0; background: #111; color: #0f0; font-family: monospace; padding: 30px; font-size: 18px; line-height: 1.6; }
+        h2 { color: #fff; border-bottom: 1px solid #555; padding-bottom: 10px; }
+        .error { color: #ff4444; font-weight: bold; background: #330000; padding: 5px; }
+        .success { color: #00ff00; }
+        .loading { color: #ffff00; }
     </style>
 </head>
 <body>
-    <div id="viewer">
-        <div id="status">正在檢查核心元件...</div>
-    </div>
-    <div id="panel">
-        <div id="chat-log"></div>
-        <div class="input-group">
-            <input type="text" id="user-input" placeholder="說點什麼...">
-            <button onclick="send()">發送</button>
-        </div>
-    </div>
+    <h2>🤖 SioGirl 核心診斷程式</h2>
+    <div id="log-panel"></div>
 
-<script>
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(35, (window.innerWidth*0.6) / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 1.3, 3); 
+    <script>
+        const logPanel = document.getElementById('log-panel');
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth * 0.6, window.innerHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    document.getElementById('viewer').appendChild(renderer.domElement);
+        // 在畫面上印出訊息的函數
+        function printLog(msg, type = 'normal') {
+            const div = document.createElement('div');
+            div.innerHTML = msg;
+            if (type === 'error') div.className = 'error';
+            if (type === 'success') div.className = 'success';
+            if (type === 'loading') div.className = 'loading';
+            logPanel.appendChild(div);
+        }
 
-    scene.add(new THREE.DirectionalLight(0xffffff, 2.0));
-    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+        // 捕捉任何隱藏的網頁錯誤
+        window.onerror = function(msg, url, line) {
+            printLog(`[系統崩潰] ${msg} (行數: ${line})`, 'error');
+            return false;
+        };
 
-    const status = document.getElementById('status');
-    const loader = new THREE.GLTFLoader();
+        printLog("開始檢查核心套件...", "loading");
 
-    // 修改處：讀取 .glb 檔案
-    loader.load('./SioGirl_Larry.glb', 
-        (gltf) => {
-            THREE.VRM.from(gltf).then((vrm) => {
-                scene.add(vrm.scene);
-                vrm.scene.rotation.y = Math.PI;
-                status.innerText = "✅ SioGirl 已連線";
-                console.log("載入成功！");
-            });
-        },
-        (p) => { status.innerText = `⏳ 載入中: ${Math.round((p.loaded/p.total)*100)}%`; },
-        (e) => { status.innerText = "❌ 讀取失敗，請確認檔案已改名為 .glb"; }
-    );
-
-    function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); }
-    animate();
-
-    function send() {
-        const input = document.getElementById('user-input');
-        if(!input.value) return;
-        const log = document.getElementById('chat-log');
-        log.innerHTML += `<p>你: ${input.value}</p>`;
-        
         setTimeout(() => {
-            const r = "看到我的 3D 身體了嗎？如果還是黑的，請確認你有把檔案改名為 .glb 並上傳！";
-            log.innerHTML += `<p style="color:#63b3ed">SioGirl: ${r}</p>`;
-            const u = new SpeechSynthesisUtterance(r);
-            u.lang = 'zh-TW';
-            window.speechSynthesis.speak(u);
-        }, 500);
-        input.value = "";
-    }
-</script>
+            try {
+                // 檢查 1：Three.js 引擎
+                if (typeof THREE === 'undefined') {
+                    printLog("❌ 錯誤：Three.js 引擎載入失敗！可能是網路擋住了 CDN。", "error");
+                    return;
+                }
+                printLog("✅ 核心引擎 (Three.js) 載入成功！", "success");
+
+                // 檢查 2：GLTF 載入器
+                if (typeof THREE.GLTFLoader === 'undefined') {
+                    printLog("❌ 錯誤：GLTFLoader 載入失敗！", "error");
+                    return;
+                }
+                printLog("✅ 模型載入器 (GLTFLoader) 載入成功！", "success");
+
+                // 檢查 3：VRM 插件
+                if (typeof THREE.VRM === 'undefined') {
+                    printLog("❌ 錯誤：VRM 插件載入失敗！", "error");
+                    return;
+                }
+                printLog("✅ 虛擬人套件 (VRM) 載入成功！", "success");
+
+                // 檢查 4：讀取模型檔案
+                printLog("----------------------------------", "normal");
+                printLog("開始尋找 SioGirl_Larry.glb 檔案...", "loading");
+
+                const loader = new THREE.GLTFLoader();
+                loader.load('./SioGirl_Larry.glb', 
+                    (gltf) => {
+                        printLog("✅ 檔案下載完成！準備解析骨架...", "success");
+                        THREE.VRM.from(gltf).then((vrm) => {
+                            printLog("🎉 大成功！模型解析完美通過！(如果你看到這行，代表模型沒問題，我們可以換回有畫面的版本了)", "success");
+                        }).catch(err => {
+                            printLog(`❌ 模型解析失敗 (檔案可能損壞)：${err.message}`, "error");
+                        });
+                    },
+                    (progress) => {
+                        if (progress.total > 0) {
+                            printLog(`...檔案下載中：${Math.round((progress.loaded / progress.total) * 100)}%`);
+                        } else {
+                            printLog(`...檔案下載中：已讀取 ${Math.round(progress.loaded / 1024)} KB`);
+                        }
+                    },
+                    (err) => {
+                        printLog(`❌ 檔案讀取失敗！(404 Not Found)<br>請去 GitHub 確認兩件事：<br>1. 檔案真的叫 <b>SioGirl_Larry.glb</b> 嗎？（注意大小寫）<br>2. 檔案真的跟 index.html 在同一個地方嗎？`, "error");
+                    }
+                );
+
+            } catch (e) {
+                printLog(`[未知錯誤] ${e.message}`, "error");
+            }
+        }, 1500); // 延遲一下確保腳本有時間下載
+    </script>
 </body>
 </html>
