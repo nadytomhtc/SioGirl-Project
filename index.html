@@ -2,76 +2,78 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>SioGirl VRM 穩定版</title>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@1.0.0/lib/three-vrm.js"></script>
+    <title>SioGirl VRM 終極修復版</title>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.0.0/lib/three-vrm.js"></script>
     <style>
-        body { margin: 0; background: #0f172a; color: white; display: flex; height: 100vh; overflow: hidden; font-family: sans-serif; }
-        #canvas-container { width: 50%; height: 100%; border-right: 2px solid #1e293b; position: relative; }
-        #ui-panel { width: 50%; padding: 20px; display: flex; flex-direction: column; }
-        #chat-box { flex: 1; background: #1e293b; border-radius: 12px; padding: 15px; overflow-y: auto; margin-bottom: 10px; }
-        #loader-wrapper { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-        #status-msg { color: #60a5fa; margin-top: 10px; font-size: 14px; }
+        body { margin: 0; background: #0b0f1a; color: white; display: flex; height: 100vh; font-family: sans-serif; overflow: hidden; }
+        #viewer { width: 50%; height: 100%; border-right: 2px solid #2d3748; background: radial-gradient(circle, #1a202c 0%, #0b0f1a 100%); position: relative; }
+        #panel { width: 50%; padding: 25px; display: flex; flex-direction: column; background: #1a202c; }
+        #status-bar { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; font-size: 12px; border-left: 3px solid #4299e1; }
+        #chat-log { flex: 1; overflow-y: auto; margin-bottom: 15px; border-bottom: 1px solid #2d3748; padding-bottom: 10px; }
+        input { padding: 12px; border-radius: 8px; border: 1px solid #4a5568; background: #2d3748; color: white; width: calc(100% - 100px); }
+        button { padding: 12px; background: #4299e1; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="canvas-container">
-        <div id="loader-wrapper">
-            <div id="percent-text" style="font-size: 24px;">正在召喚 SioGirl...</div>
-            <div id="status-msg">初始化引擎中...</div>
-        </div>
+    <div id="viewer">
+        <div id="status-bar">🚀 正在連線 SioGirl 核心...</div>
     </div>
-    <div id="ui-panel">
-        <div id="chat-box"></div>
+    <div id="panel">
+        <div id="chat-log"></div>
         <div style="display:flex; gap:10px;">
-            <input type="text" id="user-input" placeholder="對她說話..." style="flex:1; padding:12px; border-radius:8px; border:none; background:#334155; color:white;">
-            <button onclick="chat()" style="padding:10px 20px; background:#3b82f6; border:none; color:white; border-radius:8px; cursor:pointer;">發送</button>
+            <input type="text" id="user-input" placeholder="對 SioGirl 說點什麼...">
+            <button onclick="sendChat()">發送</button>
         </div>
     </div>
 
 <script>
+    // --- 基礎環境設定 ---
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(35, (window.innerWidth/2) / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1.4, 3.0); // 稍微拉遠相機，確保能看到人
+    const camera = new THREE.PerspectiveCamera(30, (window.innerWidth/2) / window.innerHeight, 0.1, 100);
+    camera.position.set(0.0, 1.4, 3.5); // 拉遠一點點，確保角色在視野內
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth/2, window.innerHeight);
+    renderer.setSize(window.innerWidth / 2, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.getElementById('viewer').appendChild(renderer.domElement);
 
-    // 增加光照強度
-    const light = new THREE.DirectionalLight(0xffffff, 1.0);
+    // 光影加強（避免角色太黑看不見）
+    const light = new THREE.DirectionalLight(0xffffff, 1.5);
     light.position.set(1, 1, 1).normalize();
     scene.add(light);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
+    const status = document.getElementById('status-bar');
     const loader = new THREE.GLTFLoader();
-    
-    document.getElementById('status-msg').innerText = "連線至 GitHub 讀取模型...";
 
-    loader.load('./SioGirl_Larry.vrm', 
+    // 跨網域處理（針對 GitHub Pages）
+    loader.setCrossOrigin('anonymous');
+
+    // --- 載入 VRM ---
+    const vrmUrl = './SioGirl_Larry.vrm'; 
+    status.innerText = "⏳ 載入模型中：0%";
+
+    loader.load(
+        vrmUrl,
         (gltf) => {
             THREE.VRM.from(gltf).then((vrm) => {
                 scene.add(vrm.scene);
-                vrm.scene.rotation.y = Math.PI;
-                document.getElementById('loader-wrapper').style.display = 'none';
-                console.log("模型加載成功！");
-            }).catch(err => {
-                document.getElementById('status-msg').innerText = "VRM 格式轉換失敗: " + err;
+                vrm.scene.rotation.y = Math.PI; // 轉向正面
+                status.innerText = "✅ SioGirl 已降臨！";
+                console.log("VRM 載入成功", vrm);
+            }).catch(e => {
+                status.innerText = "❌ 解析錯誤：" + e.message;
             });
-        }, 
+        },
         (progress) => {
-            if (progress.total > 0) {
-                const percent = Math.round((progress.loaded / progress.total) * 100);
-                document.getElementById('percent-text').innerText = `正在召喚 SioGirl... ${percent}%`;
-            } else {
-                // 如果抓不到總大小，顯示已下載的 KB
-                document.getElementById('percent-text').innerText = `下載中: ${Math.round(progress.loaded / 1024)} KB`;
-            }
-        }, 
+            const loadPercent = Math.round((progress.loaded / (progress.total || 24000000)) * 100);
+            status.innerText = `⏳ 載入模型中：${loadPercent}%`;
+        },
         (error) => {
-            document.getElementById('status-msg').innerText = "讀取失敗！請檢查檔名是否為 SioGirl_Larry.vrm";
+            status.innerText = "❌ 檔案讀取失敗，請確認檔名";
             console.error(error);
         }
     );
@@ -82,20 +84,29 @@
     }
     animate();
 
-    function chat() {
+    // --- 聊天邏輯 ---
+    function sendChat() {
         const input = document.getElementById('user-input');
-        const text = input.value;
-        if(!text) return;
-        document.getElementById('chat-box').innerHTML += `<p>你: ${text}</p>`;
-        input.value = "";
+        const chatLog = document.getElementById('chat-box');
+        if (!input.value) return;
         
+        const userText = input.value;
+        const msg = document.createElement('p');
+        msg.innerText = "你: " + userText;
+        document.getElementById('chat-log').appendChild(msg);
+        input.value = "";
+
         setTimeout(() => {
-            const resp = "哈囉！我還在調整我的虛擬身體，有看到我了嗎？";
-            document.getElementById('chat-box').innerHTML += `<p style="color:#3b82f6">SioGirl: ${resp}</p>`;
-            const utter = new SpeechSynthesisUtterance(resp);
+            const response = "我是 SioGirl_Larry。如果你還沒看到我，請嘗試重新整理網頁！";
+            const aiMsg = document.createElement('p');
+            aiMsg.style.color = "#63b3ed";
+            aiMsg.innerText = "SioGirl: " + response;
+            document.getElementById('chat-log').appendChild(aiMsg);
+            
+            const utter = new SpeechSynthesisUtterance(response);
             utter.lang = 'zh-TW';
             window.speechSynthesis.speak(utter);
-        }, 500);
+        }, 800);
     }
 </script>
 </body>
