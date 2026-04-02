@@ -56,9 +56,12 @@
     // --- 2. 載入 VRM 模型 ---
     const status = document.getElementById('status-bar');
     const loader = new THREE.GLTFLoader();
+    
+    // 允許跨網域讀取模型
+    loader.setCrossOrigin('anonymous');
 
-    // ⚠️ 這裡請務必改成你剛剛上傳的檔名！ (注意大小寫)
-    const modelFileName = './SioGirl.vrm'; 
+    // 這裡已經幫你換成官方測試用兔子女孩模型的網址！
+    const modelFileName = 'https://raw.githubusercontent.com/pixiv/three-vrm/master/packages/three-vrm/examples/models/vrm/three-vrm-girl.vrm'; 
 
     loader.load(
         modelFileName, 
@@ -66,7 +69,7 @@
             THREE.VRM.from(gltf).then((vrm) => {
                 scene.add(vrm.scene);
                 vrm.scene.rotation.y = Math.PI; // 讓角色轉向正面看著鏡頭
-                status.innerText = "✅ SioGirl 已上線！";
+                status.innerText = "✅ SioGirl 測試模組已上線！";
                 document.getElementById('chat-log').innerHTML += `<div class="msg-ai">SioGirl 已準備好為您展示 VIVERSE 元宇宙體驗！</div>`;
             });
         },
@@ -78,7 +81,7 @@
             }
         },
         (error) => { 
-            status.innerText = "❌ 讀取失敗，請確認檔名是否為 " + modelFileName; 
+            status.innerText = "❌ 讀取失敗，請確認網路連線"; 
             console.error(error);
         }
     );
