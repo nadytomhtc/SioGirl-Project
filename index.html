@@ -1,97 +1,120 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>SioGirl 系統診斷面板</title>
-    <script src="https://unpkg.com/three@0.146.0/build/three.min.js"></script>
-    <script src="https://unpkg.com/three@0.146.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://unpkg.com/@pixiv/three-vrm@1.0.9/lib/three-vrm.js"></script>
+    <title>SioGirl AI 虛擬明星 MVP</title>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.0.0/lib/three-vrm.js"></script>
     <style>
-        body { margin: 0; background: #111; color: #0f0; font-family: monospace; padding: 30px; font-size: 18px; line-height: 1.6; }
-        h2 { color: #fff; border-bottom: 1px solid #555; padding-bottom: 10px; }
-        .error { color: #ff4444; font-weight: bold; background: #330000; padding: 5px; }
-        .success { color: #00ff00; }
-        .loading { color: #ffff00; }
+        body { margin: 0; background: #0b0f1a; color: white; display: flex; height: 100vh; font-family: "Microsoft JhengHei", sans-serif; overflow: hidden; }
+        #viewer { width: 55%; height: 100%; position: relative; background: radial-gradient(circle, #2d3748 0%, #0b0f1a 100%); }
+        #panel { width: 45%; padding: 25px; background: #1a202c; display: flex; flex-direction: column; border-left: 2px solid #4a5568; box-sizing: border-box; }
+        #status-bar { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 8px; font-size: 14px; color: #63b3ed; border: 1px solid #2b6cb0; }
+        #chat-log { flex: 1; overflow-y: auto; padding: 15px; background: #0f172a; border-radius: 10px; font-size: 15px; line-height: 1.6; margin-bottom: 15px; border: 1px solid #334155; }
+        .input-group { display: flex; gap: 10px; }
+        input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #4a5568; background: #2d3748; color: white; font-size: 15px; }
+        button { padding: 12px 25px; background: linear-gradient(135deg, #3182ce, #805ad5); border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.2s; }
+        button:hover { transform: scale(1.05); }
+        .msg-user { color: #a0aec0; margin-bottom: 10px; }
+        .msg-ai { color: #63b3ed; margin-bottom: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h2>🤖 SioGirl 核心診斷程式</h2>
-    <div id="log-panel"></div>
+    <div id="viewer">
+        <div id="status-bar">🚀 系統啟動中...</div>
+    </div>
+    <div id="panel">
+        <h2 style="margin-top:0; color:#e2e8f0;">SioGirl 互動終端</h2>
+        <div id="chat-log">
+            <div class="msg-user">系統提示：等待模型載入完成後即可開始對話。</div>
+        </div>
+        <div class="input-group">
+            <input type="text" id="user-input" placeholder="嗨！跟 SioGirl 說點什麼..." onkeypress="if(event.keyCode==13) sendMsg()">
+            <button onclick="sendMsg()">傳送訊息</button>
+        </div>
+    </div>
 
-    <script>
-        const logPanel = document.getElementById('log-panel');
+<script>
+    // --- 1. 設定 3D 場景 ---
+    const scene = new THREE.Scene();
+    // 攝影機位置 (X:左右, Y:上下高度, Z:遠近距離)
+    const camera = new THREE.PerspectiveCamera(35, (window.innerWidth*0.55) / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.35, 2.8); 
 
-        // 在畫面上印出訊息的函數
-        function printLog(msg, type = 'normal') {
-            const div = document.createElement('div');
-            div.innerHTML = msg;
-            if (type === 'error') div.className = 'error';
-            if (type === 'success') div.className = 'success';
-            if (type === 'loading') div.className = 'loading';
-            logPanel.appendChild(div);
-        }
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth * 0.55, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.getElementById('viewer').appendChild(renderer.domElement);
 
-        // 捕捉任何隱藏的網頁錯誤
-        window.onerror = function(msg, url, line) {
-            printLog(`[系統崩潰] ${msg} (行數: ${line})`, 'error');
-            return false;
-        };
+    // 打光 (讓角色看起來明亮)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    directionalLight.position.set(1, 1, 1).normalize();
+    scene.add(directionalLight);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
-        printLog("開始檢查核心套件...", "loading");
+    // --- 2. 載入 VRM 模型 ---
+    const status = document.getElementById('status-bar');
+    const loader = new THREE.GLTFLoader();
 
-        setTimeout(() => {
-            try {
-                // 檢查 1：Three.js 引擎
-                if (typeof THREE === 'undefined') {
-                    printLog("❌ 錯誤：Three.js 引擎載入失敗！可能是網路擋住了 CDN。", "error");
-                    return;
-                }
-                printLog("✅ 核心引擎 (Three.js) 載入成功！", "success");
+    // ⚠️ 這裡請務必改成你剛剛上傳的檔名！ (注意大小寫)
+    const modelFileName = './SioGirl.vrm'; 
 
-                // 檢查 2：GLTF 載入器
-                if (typeof THREE.GLTFLoader === 'undefined') {
-                    printLog("❌ 錯誤：GLTFLoader 載入失敗！", "error");
-                    return;
-                }
-                printLog("✅ 模型載入器 (GLTFLoader) 載入成功！", "success");
-
-                // 檢查 3：VRM 插件
-                if (typeof THREE.VRM === 'undefined') {
-                    printLog("❌ 錯誤：VRM 插件載入失敗！", "error");
-                    return;
-                }
-                printLog("✅ 虛擬人套件 (VRM) 載入成功！", "success");
-
-                // 檢查 4：讀取模型檔案
-                printLog("----------------------------------", "normal");
-                printLog("開始尋找 SioGirl_Larry.glb 檔案...", "loading");
-
-                const loader = new THREE.GLTFLoader();
-                loader.load('./SioGirl_Larry.glb', 
-                    (gltf) => {
-                        printLog("✅ 檔案下載完成！準備解析骨架...", "success");
-                        THREE.VRM.from(gltf).then((vrm) => {
-                            printLog("🎉 大成功！模型解析完美通過！(如果你看到這行，代表模型沒問題，我們可以換回有畫面的版本了)", "success");
-                        }).catch(err => {
-                            printLog(`❌ 模型解析失敗 (檔案可能損壞)：${err.message}`, "error");
-                        });
-                    },
-                    (progress) => {
-                        if (progress.total > 0) {
-                            printLog(`...檔案下載中：${Math.round((progress.loaded / progress.total) * 100)}%`);
-                        } else {
-                            printLog(`...檔案下載中：已讀取 ${Math.round(progress.loaded / 1024)} KB`);
-                        }
-                    },
-                    (err) => {
-                        printLog(`❌ 檔案讀取失敗！(404 Not Found)<br>請去 GitHub 確認兩件事：<br>1. 檔案真的叫 <b>SioGirl_Larry.glb</b> 嗎？（注意大小寫）<br>2. 檔案真的跟 index.html 在同一個地方嗎？`, "error");
-                    }
-                );
-
-            } catch (e) {
-                printLog(`[未知錯誤] ${e.message}`, "error");
+    loader.load(
+        modelFileName, 
+        (gltf) => {
+            THREE.VRM.from(gltf).then((vrm) => {
+                scene.add(vrm.scene);
+                vrm.scene.rotation.y = Math.PI; // 讓角色轉向正面看著鏡頭
+                status.innerText = "✅ SioGirl 已上線！";
+                document.getElementById('chat-log').innerHTML += `<div class="msg-ai">SioGirl 已準備好為您展示 VIVERSE 元宇宙體驗！</div>`;
+            });
+        },
+        (progress) => {
+            if(progress.total > 0) {
+                status.innerText = `⏳ 模型載入中: ${Math.round((progress.loaded/progress.total)*100)}%`;
+            } else {
+                status.innerText = `⏳ 模型下載中...`;
             }
-        }, 1500); // 延遲一下確保腳本有時間下載
-    </script>
+        },
+        (error) => { 
+            status.innerText = "❌ 讀取失敗，請確認檔名是否為 " + modelFileName; 
+            console.error(error);
+        }
+    );
+
+    // 每秒刷新畫面
+    function animate() { 
+        requestAnimationFrame(animate); 
+        renderer.render(scene, camera); 
+    }
+    animate();
+
+    // --- 3. 聊天與語音互動 ---
+    function sendMsg() {
+        const input = document.getElementById('user-input');
+        if(!input.value) return;
+        const log = document.getElementById('chat-log');
+        
+        // 顯示玩家訊息
+        log.innerHTML += `<div class="msg-user">你: ${input.value}</div>`;
+        
+        // 模擬 AI 思考延遲
+        setTimeout(() => {
+            const response = "哈囉！我是 SioGirl！你覺得我今天這套兔子裝好看嗎？未來我們可以在 VIVERSE 裡面一起互動喔！";
+            log.innerHTML += `<div class="msg-ai">SioGirl: ${response}</div>`;
+            
+            // 語音播放
+            const utter = new SpeechSynthesisUtterance(response);
+            utter.lang = 'zh-TW';
+            utter.rate = 1.1; // 說話語速稍微快一點，比較活潑
+            window.speechSynthesis.speak(utter);
+            
+            log.scrollTop = log.scrollHeight; // 自動捲動到底部
+        }, 600);
+        
+        input.value = "";
+    }
+</script>
 </body>
 </html>
